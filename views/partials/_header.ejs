@@ -1,10 +1,10 @@
 <header>
       <nav>
-          <a href="/dashboard">Chat</a>
-          <% if (isAdmin) { %><a href="/admin">Admin</a><% } %>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/channels">Channels</a>
+          <% if (isAdmin) { %><a href="/admin">Admin Panel</a><% } %>
           <form action="/logout" method="POST" style="display:inline;">
               <button type="submit">Logout</button>
           </form>
       </nav>
   </header>
-  

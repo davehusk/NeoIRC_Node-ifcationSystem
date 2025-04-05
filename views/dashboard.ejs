@@ -7,7 +7,7 @@
 <body>
 <%- include('partials/_header') %>
 <main class="main-content">
-    <h2>Welcome, <%= username %></h2>
+    <h2>Welcome, <%= username %> — Channel: <%= currentChannel %></h2>
 
     <div class="chat-layout">
         <div class="user-list">
@@ -22,12 +22,22 @@
             </ul>
         </div>
 
-        <div class="chat-box" id="chat-box"></div>
+        <div class="chat-box" id="chat-box">
+            <% messages.forEach(msg => { %>
+                <div class="<%= msg.isAnnouncement ? 'announcement' : '' %>">
+                    <% if (msg.isPrivate) { %>
+                        <em>[Private to <%= msg.to %>]</em>
+                    <% } %>
+                    <strong><%= msg.sender %></strong> [<%= msg.timestamp.toLocaleString() %>]: <%= msg.content %>
+                </div>
+            <% }) %>
+        </div>
     </div>
 
     <form id="chat-form">
-        <input type="text" name="message" id="message-input" placeholder="Type your message..." required>
-        <input type="text" name="to" id="to-user" placeholder="(Optional) Private to...">
+        <input type="text" id="message-input" name="message" placeholder="Type message..." required>
+        <input type="text" id="to-user" name="to" placeholder="Optional: user to message privately">
+        <input type="hidden" id="channel-name" name="channel" value="<%= currentChannel %>">
         <button type="submit">Send</button>
     </form>
 </main>
