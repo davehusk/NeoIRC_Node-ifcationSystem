@@ -13,6 +13,11 @@
             <button type="submit">Send</button>
         </form>
         <div class="notifications-container" id="notifications-container">
+            <% notifications.forEach(note => { %>
+                <div class="notification-entry">
+                    <strong><%= note.username %></strong> at <%= note.timestamp.toLocaleString() %>: <%= note.message %>
+                </div>
+            <% }) %>            
         </div>
         <form action="/logout" method="POST">
             <button type="submit">Logout</button>
