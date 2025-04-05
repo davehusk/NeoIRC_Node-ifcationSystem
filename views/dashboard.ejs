@@ -1,19 +1,23 @@
-<!-- If necessary, you can replace some of this with the navigation header -->
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Realtime Notifications</title>
-        <link rel="stylesheet" href="/styles.css">
-    </head>
-    <body>
-        <main class="main-content">
-            <h1>Notifications</h1>
-            <div class="notifications-container" id="notifications-container">
-                <!-- Notifications probably go here. Likely with your frontend.js -->
-            </div>
-        </main>
-        <script src="/frontend.js" type="application/javascript"></script>
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <title>Realtime Notifications</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <main class="main-content">
+        <h1>Welcome <%= username %></h1>
+        <form id="notification-form">
+            <textarea name="message" placeholder="Send a notification..." required></textarea>
+            <button type="submit">Send</button>
+        </form>
+        <div class="notifications-container" id="notifications-container">
+        </div>
+        <form action="/logout" method="POST">
+            <button type="submit">Logout</button>
+        </form>
+    </main>
+    <script src="/frontend.js"></script>
+</body>
 </html>

@@ -4,10 +4,10 @@ const path = require('path');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
-
-const PORT = 3000;
-//TODO: Replace with the URI pointing to your own MongoDB setup
-const MONGO_URI = 'mongodb://localhost:27017/realtime_chat';
+const User = require('./models/User');
+require('dotenv').config();
+const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI;
 const app = express();
 expressWs(app);
 
@@ -19,38 +19,83 @@ app.set('view engine', 'ejs');
 app.use(session({
     secret: 'realtime-notifications-secret',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false
 }));
 
 let connectedClients = [];
 
-//Note: These are (probably) not all the required routes, nor are the ones present all completed.
-//But they are a decent starting point for the routes you'll probably need
-
 app.ws('/ws', (socket, request) => {
+    connectedClients.push(socket);
+
     socket.on('close', () => {
-        
+        connectedClients = connectedClients.filter(client => client !== socket);
     });
 });
 
-// GET /login - Render login form
-app.get("/login", (request, response) => {
-    response.render("login");
+// Middleware to protect authenticated routes
+function requireAuth(req, res, next) {
+    if (req.session.userId) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
+}
+
+app.get("/", (req, res) => {
+    res.render("index");
 });
 
-// GET /signup - Render signup form
-app.get("/signup", (request, response) => {
-    response.render("signup");
+app.get("/login", (req, res) => {
+    res.render("login");
 });
 
-// GET / - Render index page
-app.get("/", (request, response) => {
-    response.render("index");
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (user && await bcrypt.compare(password, user.password)) {
+        req.session.userId = user._id;
+        req.session.username = user.username;
+        res.redirect("/dashboard");
+    } else {
+        res.send("Invalid email or password");
+    }
 });
 
-// POST /logout - Log the user out of the site
-app.post('/logout', (request, response) => {
+app.get("/signup", (req, res) => {
+    res.render("signup");
+});
 
+app.post("/signup", async (req, res) => {
+    const { email, username, password } = req.body;
+    const hashed = await bcrypt.hash(password, 10);
+    const newUser = new User({ email, username, password: hashed });
+    await newUser.save();
+    req.session.userId = newUser._id;
+    req.session.username = newUser.username;
+    res.redirect("/dashboard");
+});
+
+app.post('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/');
+    });
+});
+
+app.get("/dashboard", requireAuth, (req, res) => {
+    res.render("dashboard", { username: req.session.username });
+});
+
+// POST a new notification
+app.post('/send', requireAuth, (req, res) => {
+    const { message } = req.body;
+    const payload = JSON.stringify({
+        username: req.session.username,
+        timestamp: new Date().toLocaleString(),
+        message
+    });
+
+    connectedClients.forEach(socket => socket.send(payload));
+    res.sendStatus(200);
 });
 
 mongoose.connect(MONGO_URI)
