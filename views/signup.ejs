@@ -1,31 +1,19 @@
-<!-- If necessary, you can replace some of this with the navigation header -->
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Realtime Notifications</title>
-        <link rel="stylesheet" href="/styles.css">
-    </head>
-    <body>
-        <main class="main-content">
-            <h1>Sign Up</h1>
-            <form action="/signup" method="POST">
-                <div class="form-input-container">
-                    <label for="email">Email:</label>
-                    <input type="email" name="email" id="email" required>
-                </div>
-                <div class="form-input-container">
-                    <label for="username">Username:</label>
-                    <input type="text" name="username" id="username" required>
-                </div>
-                <div class="form-input-container">
-                    <label for="password">Password:</label>
-                    <input type="password" name="password" id="password" required>
-                </div>
-                <button type="submit">Sign Up</button>
-            </form>
-            <p><a href="/">Go back</a></p>
-        </main>
-    </body>
+<html>
+<head>
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <main class="main-content">
+        <h1>Sign Up</h1>
+        <% if (error) { %><p class="error"><%= error %></p><% } %>
+        <form method="POST" action="/signup">
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Register</button>
+        </form>
+    </main>
+</body>
 </html>

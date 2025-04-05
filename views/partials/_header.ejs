@@ -1,9 +1,7 @@
-<header style="width: 100%; display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem;">
+<header>
       <nav>
-          <a href="/dashboard">Dashboard</a> |
-          <% if (isAdmin) { %>
-              <a href="/admin">Admin Panel</a> |
-          <% } %>
+          <a href="/dashboard">Chat</a>
+          <% if (isAdmin) { %><a href="/admin">Admin</a><% } %>
           <form action="/logout" method="POST" style="display:inline;">
               <button type="submit">Logout</button>
           </form>

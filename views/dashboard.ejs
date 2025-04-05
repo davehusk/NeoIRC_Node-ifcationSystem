@@ -1,28 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Realtime Notifications</title>
+    <title>Chat Dashboard</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <main class="main-content">
-        <h1>Welcome <%= username %></h1>
-        <form id="notification-form">
-            <textarea name="message" placeholder="Send a notification..." required></textarea>
-            <button type="submit">Send</button>
-        </form>
-        <div class="notifications-container" id="notifications-container">
-            <% notifications.forEach(note => { %>
-                <div class="notification-entry">
-                    <strong><%= note.username %></strong> at <%= note.timestamp.toLocaleString() %>: <%= note.message %>
-                </div>
-            <% }) %>            
+<%- include('partials/_header') %>
+<main class="main-content">
+    <h2>Welcome, <%= username %></h2>
+
+    <div class="chat-layout">
+        <div class="user-list">
+            <h4>Users</h4>
+            <ul id="user-list">
+                <% users.forEach(user => { %>
+                    <li class="user-entry" data-username="<%= user.username %>">
+                        <%= user.username %>
+                        <% if (user.isOnline) { %><span class="online">●</span><% } else { %><span class="offline">○</span><% } %>
+                    </li>
+                <% }) %>
+            </ul>
         </div>
-        <form action="/logout" method="POST">
-            <button type="submit">Logout</button>
-        </form>
-    </main>
-    <script src="/frontend.js"></script>
+
+        <div class="chat-box" id="chat-box"></div>
+    </div>
+
+    <form id="chat-form">
+        <input type="text" name="message" id="message-input" placeholder="Type your message..." required>
+        <input type="text" name="to" id="to-user" placeholder="(Optional) Private to...">
+        <button type="submit">Send</button>
+    </form>
+</main>
+<script src="/frontend.js"></script>
 </body>
 </html>

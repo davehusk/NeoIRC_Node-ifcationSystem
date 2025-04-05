@@ -1,30 +1,36 @@
-const webSocket = new WebSocket("ws://localhost:3000/ws");
-const notificationElement = document.getElementById("notifications-container");
+const ws = new WebSocket(`ws://${window.location.host}/ws`);
+const chatBox = document.getElementById("chat-box");
+const form = document.getElementById("chat-form");
+const messageInput = document.getElementById("message-input");
+const toUserInput = document.getElementById("to-user");
 
-webSocket.addEventListener("message", (event) => {
+ws.addEventListener("message", (event) => {
     const data = JSON.parse(event.data);
-    onNewNotificationReceieved(data.username, data.timestamp, data.message);
+    const entry = document.createElement("div");
+    const tag = data.to ? `<em>Private to ${data.to}</em>` : "";
+    entry.innerHTML = `<strong>${data.sender}</strong> [${data.timestamp}] ${tag}: ${data.content}`;
+    chatBox.append(entry);
+    chatBox.scrollTop = chatBox.scrollHeight;
 });
 
-function onNewNotificationReceieved(username, timestamp, message) {
-    const entry = document.createElement("div");
-    entry.classList.add("notification-entry");
-    entry.innerHTML = `<strong>${username}</strong> at ${timestamp}: ${message}`;
-    notificationElement.prepend(entry);
+if (form) {
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const message = messageInput.value;
+        const to = toUserInput.value.trim();
+        await fetch("/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, to })
+        });
+        form.reset();
+    });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("notification-form");
-    if (form) {
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const message = form.message.value;
-            await fetch("/send", {
-                method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            });
-            form.reset();
-        });
-    }
+document.querySelectorAll(".user-entry").forEach(entry => {
+    entry.addEventListener("click", () => {
+        const username = entry.getAttribute("data-username");
+        toUserInput.value = username;
+        messageInput.focus();
+    });
 });
