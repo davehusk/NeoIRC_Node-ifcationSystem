@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const privateMessageSchema = new mongoose.Schema({
-    from: String,
-    to: String,
-    content: String,
+    from: { type: String, required: true },
+    to: { type: String, required: true },
+    content: { type: String, required: true },
     timestamp: { type: Date, default: Date.now }
 });
 

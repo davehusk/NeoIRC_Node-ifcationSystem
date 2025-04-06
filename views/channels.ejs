@@ -1,22 +1,67 @@
 <!DOCTYPE html>
 <html>
-<head><title>Channels</title><link rel="stylesheet" href="/styles.css"></head>
+<head>
+    <title>📡 Channel Center</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
 <body>
-<%- include('partials/_header') %>
-<main class="main-content">
-    <h2>Channels</h2>
-    <ul>
-        <% channels.forEach(c => { %>
-            <li><a href="/dashboard?channel=<%= c.name %>"><%= c.name %></a> - <%= c.description %></li>
-        <% }) %>
-    </ul>
+<header class="main-header">
+    <nav class="toolbar channels-toolbar">
+        <div class="toolbar-left">
+            <a href="/dashboard">🏠 Home</a>
+            <a href="/channels">📡 Channels</a>
+            <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                <a href="/admin">🛠️ Admin</a>
+            <% } %>
+        </div>
+        <div class="toolbar-right">
+            <span class="user-badge">Hello, <%= username %></span>
+            <button onclick="toggleZoom()">🔍 Zoom</button>
+            <form action="/logout" method="POST">
+                <button type="submit">⏏️ Logout</button>
+            </form>
+        </div>
+    </nav>
+</header>
 
-    <h3>Create New Channel</h3>
-    <form method="POST" action="/channels/create">
-        <input type="text" name="name" placeholder="Channel name" required>
-        <input type="text" name="description" placeholder="Description">
-        <button type="submit">Create</button>
-    </form>
+<main class="main-content">
+    <h2>📡 Channel Control Center</h2>
+
+    <section>
+        <h3>🛰️ Available Channels</h3>
+        <ul class="channel-list">
+            <% channels.forEach(c => { %>
+                <li class="channel-entry">
+                    <div class="channel-meta">
+                        <a href="/dashboard?channel=<%= c.name %>">#<%= c.name %></a>
+                        <span class="channel-desc"><%= c.description || 'No description' %></span>
+                        <small>🕒 Created: <%= new Date(c.createdAt).toLocaleDateString() %></small>
+                    </div>
+                    <% if (isAdmin) { %>
+                        <form method="POST" action="/channels/delete" class="channel-delete-form">
+                            <input type="hidden" name="name" value="<%= c.name %>">
+                            <button type="submit">🗑️ Delete</button>
+                        </form>
+                    <% } %>
+                </li>
+            <% }) %>
+        </ul>
+    </section>
+
+    <section>
+        <h3>➕ Create New Channel</h3>
+        <form method="POST" action="/channels/create" class="create-channel-form">
+            <input type="text" name="name" placeholder="#channel-name" required>
+            <input type="text" name="description" placeholder="Optional description...">
+            <button type="submit">➕ Create</button>
+        </form>
+    </section>
 </main>
+
+<script>
+    function toggleZoom() {
+        document.body.classList.toggle('zoomed');
+    }
+</script>
 </body>
 </html>

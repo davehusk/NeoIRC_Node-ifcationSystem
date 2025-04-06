@@ -1,37 +1,94 @@
 <!DOCTYPE html>
 <html>
-<head><title>Admin Panel</title><link rel="stylesheet" href="/styles.css"></head>
+<head>
+    <title>Neo IRC Admin Panel</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
 <body>
-<%- include('partials/_header') %>
-<main class="main-content">
-    <h2>Admin Panel</h2>
-    <h3>All Users</h3>
-    <ul>
-        <% users.forEach(u => { %>
-            <li><%= u.username %> — <%= u.role %> — 
-                <% if (u.isOnline) { %><span class="status-online">Online</span><% } else { %>
-                    <span class="status-offline">Last active: <%= u.lastActive.toLocaleString() %></span><% } %>
-            </li>
-        <% }) %>
-    </ul>
+<header class="main-header">
+    <nav class="toolbar admin-toolbar">
+        <div class="toolbar-left">
+            <a href="/dashboard">🏠 Dashboard</a>
+            <a href="/channels">📡 Channels</a>
+            <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                <a href="/admin">🛠️ Admin Panel</a>
+            <% } %>
+        </div>
+        <div class="toolbar-right">
+            <button onclick="toggleZoom()">🔍 Zoom</button>
+            <form action="/logout" method="POST">
+                <button type="submit">⏏️ Logout</button>
+            </form>
+        </div>
+    </nav>
+</header>
 
-    <h3>Global Announcement</h3>
-    <form id="admin-message-form">
-        <textarea id="admin-announcement" required></textarea>
-        <button type="submit">Send Announcement</button>
-    </form>
+<main class="main-content">
+    <h2>🛠️ Admin Panel</h2>
+
+    <section>
+        <h3>📋 User List</h3>
+        <ul class="user-list">
+            <% users.forEach(u => { %>
+                <li>
+                    <strong><%= u.username %></strong> — <%= u.role %>
+                    <% if (u.isOnline) { %>
+                        <span class="online">🟢 Online</span>
+                    <% } else { %>
+                        <span class="offline">🔘 Last active: <%= new Date(u.lastActive).toLocaleString() %></span>
+                    <% } %>
+                </li>
+            <% }) %>
+        </ul>
+    </section>
+
+    <section>
+        <h3>📢 Send Global Announcement</h3>
+        <form id="admin-message-form">
+            <textarea id="admin-announcement" name="message" required placeholder="Broadcast to all users"></textarea>
+            <input type="hidden" name="fromAdmin" value="true">
+            <button type="submit">📡 Send Announcement</button>
+        </form>
+    </section>
+
+    <section>
+        <h3>🧾 Recent Announcements <button id="toggle-announcements">Collapse</button></h3>
+        <div id="announcement-wrapper" class="chat-box">
+            <% announcements.slice(0, 5).forEach(msg => { 
+                const isNew = (new Date() - new Date(msg.timestamp)) < (5 * 60 * 1000); // last 5 minutes
+            %>
+                <div class="announcement">
+                    <strong>📢 <%= msg.sender %></strong>
+                    <% if (isNew) { %><span class="new-tag">🆕</span><% } %>
+                    <span class="timestamp"><%= new Date(msg.timestamp).toLocaleString() %></span><br>
+                    <span><%= msg.content %></span>
+                </div>
+            <% }) %>
+        </div>
+    </section>
 </main>
+
 <script>
-document.getElementById("admin-message-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const message = document.getElementById("admin-announcement").value;
-    await fetch("/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, fromAdmin: true })
+    function toggleZoom() {
+        document.body.classList.toggle('zoomed');
+    }
+
+    document.getElementById("admin-message-form")?.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const message = this.message.value;
+        await fetch("/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message, fromAdmin: true })
+        });
+        this.reset();
+        location.reload(); // TEMP: reload to show new announcement
     });
-    e.target.reset();
-});
+
+    document.getElementById("toggle-announcements")?.addEventListener("click", () => {
+        const el = document.getElementById("announcement-wrapper");
+        el.style.display = el.style.display === "none" ? "block" : "none";
+    });
 </script>
 </body>
 </html>

@@ -1,10 +1,20 @@
 <header>
-      <nav>
-          <a href="/dashboard">Dashboard</a>
-          <a href="/channels">Channels</a>
-          <% if (isAdmin) { %><a href="/admin">Admin Panel</a><% } %>
-          <form action="/logout" method="POST" style="display:inline;">
-              <button type="submit">Logout</button>
-          </form>
-      </nav>
-  </header>
+    <nav>
+        <a href="/dashboard">🏠 Dashboard</a>
+        <a href="/channels">📡 Channels</a>
+        <% if (isAdmin) { %><a href="/admin">🛠️ Admin Panel</a><% } %>
+        <button onclick="toggleZoom()">🔍 Zoom</button>
+        <form action="/logout" method="POST" style="display:inline;">
+            <button type="submit">⏏️ Logout</button>
+        </form>
+    </nav>
+</header>
+<script>
+    function toggleZoom() {
+        const zoomTarget = document.documentElement;
+        const currentScale = zoomTarget.style.getPropertyValue('--zoom-scale') || '1';
+        const newScale = currentScale === '1.25' ? '1' : '1.25';
+        zoomTarget.style.setProperty('--zoom-scale', newScale);
+    }
+    </script>
+    
