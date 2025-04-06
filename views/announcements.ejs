@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📢 Global Announcements</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<%- include('partials/_header') %>
+
+<main class="main-content">
+    <h2>📡 Global Announcements Archive</h2>
+
+    <% if (announcements.length === 0) { %>
+        <p>No announcements yet.</p>
+    <% } else { %>
+        <% announcements.forEach(msg => { %>
+            <div class="announcement">
+                <strong>📢 <%= msg.sender %></strong>
+                <span class="timestamp">[<%= new Date(msg.timestamp).toLocaleString() %>]</span><br>
+                <span><%= msg.content %></span><br>
+                <a class="announcement-reply" href="/dashboard?channel=general&replyTo=admin">💬 Reply</a>
+            </div>
+        <% }) %>
+    <% } %>
+</main>
+</body>
+</html>

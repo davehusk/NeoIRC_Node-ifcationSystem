@@ -30,17 +30,21 @@
         <h3>📋 User List</h3>
         <ul class="user-list">
             <% users.forEach(u => { %>
-                <li>
-                    <strong><%= u.username %></strong> — <%= u.role %>
-                    <% if (u.isOnline) { %>
-                        <span class="online">🟢 Online</span>
-                    <% } else { %>
-                        <span class="offline">🔘 Last active: <%= new Date(u.lastActive).toLocaleString() %></span>
-                    <% } %>
-                </li>
+              <li>
+                <strong><%= u.username %></strong> — <%= u.role %>
+                <% if (u.isOnline) { %>
+                  <span class="online">🟢 Online</span>
+                  <small>in #<%= u.currentChannel || 'general' %></small>
+                <% } else { %>
+                  <span class="offline">🔘 Last active: <%= new Date(u.lastActive).toLocaleString() %></span>
+                <% } %>
+              </li>
             <% }) %>
-        </ul>
+          </ul>
+          
+        
     </section>
+
 
     <section>
         <h3>📢 Send Global Announcement</h3>
@@ -55,17 +59,26 @@
         <h3>🧾 Recent Announcements <button id="toggle-announcements">Collapse</button></h3>
         <div id="announcement-wrapper" class="chat-box">
             <% announcements.slice(0, 5).forEach(msg => { 
-                const isNew = (new Date() - new Date(msg.timestamp)) < (5 * 60 * 1000); // last 5 minutes
+                const isNew = (new Date() - new Date(msg.timestamp)) < 300000; 
             %>
                 <div class="announcement">
                     <strong>📢 <%= msg.sender %></strong>
-                    <% if (isNew) { %><span class="new-tag">🆕</span><% } %>
+                    <% if (isNew) { %>
+                        <span class="new-tag">🆕</span>
+                    <% } %>
                     <span class="timestamp"><%= new Date(msg.timestamp).toLocaleString() %></span><br>
                     <span><%= msg.content %></span>
+                    <form method="POST" action="/announcements/delete" style="display:inline;">
+                        <input type="hidden" name="id" value="<%= msg._id %>">
+                        <button type="submit" class="delete-btn" onclick="return confirm('Delete this announcement?')">🗑️</button>
+
+                    </form>
                 </div>
             <% }) %>
         </div>
     </section>
+    
+    
 </main>
 
 <script>
@@ -73,17 +86,16 @@
         document.body.classList.toggle('zoomed');
     }
 
-    document.getElementById("admin-message-form")?.addEventListener("submit", async function (e) {
+    document.getElementById("admin-message-form").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const message = this.message.value;
+        const message = document.getElementById("admin-announcement").value;
         await fetch("/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, fromAdmin: true })
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, fromAdmin: true })
         });
-        this.reset();
-        location.reload(); // TEMP: reload to show new announcement
-    });
+        e.target.reset();
+      });
 
     document.getElementById("toggle-announcements")?.addEventListener("click", () => {
         const el = document.getElementById("announcement-wrapper");

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>👤 Profile</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<%- include('partials/_header') %>
+
+<main class="main-content">
+  <h2>🧬 Profile of <%= profileUser.username %></h2>
+
+  <% if (canEdit) { %>
+    <form method="POST" action="/profile/update">
+      <label>Email:</label>
+      <input type="email" name="email" value="<%= profileUser.email %>" required><br>
+      <label>New Password:</label>
+      <input type="password" name="password" placeholder="Leave blank to keep current"><br>
+      <button type="submit">💾 Save Changes</button>
+    </form>
+  <% } else { %>
+    <p><strong>Email:</strong> <%= profileUser.email %></p>
+  <% } %>
+
+  <p><strong>Role:</strong> <%= profileUser.role %></p>
+  <p><strong>Last Login:</strong> <%= new Date(profileUser.lastLogin).toLocaleString() %></p>
+  <p><strong>Last Active:</strong> <%= new Date(profileUser.lastActive).toLocaleString() %></p>
+</main>
+</body>
+</html>

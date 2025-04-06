@@ -1,14 +1,27 @@
 <header>
-    <nav>
+    <nav class="toolbar">
+      <div class="toolbar-left">
         <a href="/dashboard">🏠 Dashboard</a>
         <a href="/channels">📡 Channels</a>
-        <% if (isAdmin) { %><a href="/admin">🛠️ Admin Panel</a><% } %>
-        <button onclick="toggleZoom()">🔍 Zoom</button>
-        <form action="/logout" method="POST" style="display:inline;">
-            <button type="submit">⏏️ Logout</button>
+        <% if (isAdmin) { %>
+          <a href="/admin">🛠️ Admin</a>
+        <% } %>
+        <a href="/profile">👤 Profile</a>
+      </div>
+      <div class="toolbar-right">
+        <% if (username) { %>
+          <span class="user-badge">Hello, <%= username %></span>
+        <% } %>
+        <form action="/logout" method="POST" style="display: inline;" aria-label="Logout">
+
+          <button type="submit">⏏️ Logout</button>
         </form>
+      </div>
     </nav>
-</header>
+  </header>
+  
+  
+  
 <script>
     function toggleZoom() {
         const zoomTarget = document.documentElement;

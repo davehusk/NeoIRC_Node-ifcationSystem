@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, enum: ['admin', 'voiced', 'user'], default: 'user' },
     isOnline: { type: Boolean, default: false },
-    lastActive: { type: Date, default: Date.now }
+    lastActive: { type: Date, default: Date.now },
+    lastLogin: { type: Date }
 });
 
 module.exports = mongoose.model('User', userSchema);

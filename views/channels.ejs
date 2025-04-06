@@ -35,8 +35,9 @@
                     <div class="channel-meta">
                         <a href="/dashboard?channel=<%= c.name %>">#<%= c.name %></a>
                         <span class="channel-desc"><%= c.description || 'No description' %></span>
-                        <small>🕒 Created: <%= new Date(c.createdAt).toLocaleDateString() %></small>
-                    </div>
+                        <small><%= c.name === 'general' ? '🛸 Built-in' : '🧪 User-created' %></small>
+                        
+                      </div>
                     <% if (isAdmin) { %>
                         <form method="POST" action="/channels/delete" class="channel-delete-form">
                             <input type="hidden" name="name" value="<%= c.name %>">
@@ -47,7 +48,6 @@
             <% }) %>
         </ul>
     </section>
-
     <section>
         <h3>➕ Create New Channel</h3>
         <form method="POST" action="/channels/create" class="create-channel-form">
@@ -56,6 +56,8 @@
             <button type="submit">➕ Create</button>
         </form>
     </section>
+    
+    
 </main>
 
 <script>

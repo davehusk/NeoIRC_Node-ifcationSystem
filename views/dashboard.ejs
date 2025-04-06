@@ -5,24 +5,7 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<header class="main-header">
-    <nav class="toolbar dashboard-toolbar">
-        <div class="toolbar-left">
-            <a href="/dashboard">🏠 Home</a>
-            <a href="/channels">📡 Channels</a>
-            <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
-                <a href="/admin">🛠️ Admin</a>
-            <% } %>
-        </div>
-        <div class="toolbar-right">
-            <span class="user-badge">Logged in as: <%= username %></span>
-            <button onclick="toggleZoom()">🔍 Zoom</button>
-            <form action="/logout" method="POST">
-                <button type="submit">⏏️ Logout</button>
-            </form>
-        </div>
-    </nav>
-</header>
+<%- include('partials/_header') %>
 
 <main class="main-content">
     <h2>👤 Welcome, <%= username %> — Channel: #<%= currentChannel %></h2>
@@ -36,6 +19,9 @@
                         <%= user.username %>
                         <% if (user.isOnline) { %>
                             <span class="online">●</span>
+                            <a class="user-channel-link" href="/dashboard?channel=<%= user.currentChannel || 'general' %>">
+                                <small>#<%= user.currentChannel || 'general' %></small>
+                            </a>
                         <% } else { %>
                             <span class="offline">○</span>
                         <% } %>
@@ -47,7 +33,6 @@
         <section class="chat-box">
             <div class="chat-tabs">
                 <button class="tab-btn" data-target="chat-stream">💬 Chat</button>
-                <button class="tab-btn" data-target="notifications-stream">📢 Announcements</button>
                 <button class="tab-btn" data-target="private-stream">🕵️ Private</button>
             </div>
 
@@ -56,16 +41,6 @@
                     <div>
                         <strong><%= msg.sender %></strong>
                         <span class="timestamp">[<%= new Date(msg.timestamp).toLocaleString() %>]</span><br>
-                        <span><%= msg.content %></span>
-                    </div>
-                <% }) %>
-            </div>
-
-            <div id="notifications-stream" class="chat-stream">
-                <% messages.filter(msg => msg.isAnnouncement).forEach(msg => { %>
-                    <div class="announcement">
-                        <strong>📢 <%= msg.sender %></strong>
-                        <span class="timestamp"><%= new Date(msg.timestamp).toLocaleString() %></span><br>
                         <span><%= msg.content %></span>
                     </div>
                 <% }) %>
@@ -83,6 +58,21 @@
             </div>
         </section>
     </div>
+<% if (typeof replyTo !== 'undefined') { %>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById("to-user").value = "<%= replyTo %>";
+            document.getElementById("message-input").focus();
+        });
+    </script>
+<% } %>
+<% if (isAdmin) { %>
+    <form id="clear-chat-form">
+        <input type="hidden" id="clear-channel" value="<%= currentChannel %>">
+        <button type="submit">🧹 Clear Chat in #<%= currentChannel %></button>
+    </form>
+    <% } %>
+    
 
     <form id="chat-form">
         <input type="text" id="message-input" name="message" placeholder="✍️ Type message..." required>
