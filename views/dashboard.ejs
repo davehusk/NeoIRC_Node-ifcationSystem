@@ -20,7 +20,11 @@
         <ul id="user-list">
           <% users.forEach(user => { %>
             <li class="user-entry">
-              <a class="mention-name" href="/profile/<%= user.username %>">@<%= user.username %></a>
+              <a class="mention-name" href="/profile/<%= user.username %>">
+                <% if (user.isBanned) { %><del>@<%= user.username %></del><% } else { %>@<%= user.username %><% } %>
+              </a>
+              <% if (user.role === 'admin') { %><span class="role-admin">[admin]</span><% } %>
+              <% if (user.role === 'voiced') { %><span class="role-voiced">[voiced]</span><% } %>
               <% if (user.isOnline) { %>
                 <span class="online">●</span>
                 <small>#<%= user.currentChannel || 'general' %></small>
@@ -35,26 +39,50 @@
       <!-- 💬 Chat Area -->
       <section class="chat-box">
         <div id="chat-stream" class="chat-stream">
+          <% let lastSender = null, lastTime = 0, lastDay = null; %>
           <% messages.forEach(msg => {
-            const isPrivate = msg.isPrivate;
-            const isNeo = msg.sender === 'Neo';
+            const day = new Date(msg.timestamp).toDateString();
+            const showDay = day !== lastDay;
+            const sameSender = msg.sender === lastSender;
+            const timeGap = new Date(msg.timestamp) - new Date(lastTime) > 3 * 60 * 1000;
+            const showHeader = !sameSender || timeGap;
             const isOwn = msg.sender === username;
+            const isNeo = msg.sender === 'Neo';
             const userClass = `user-${msg.sender.toLowerCase()}`;
             const ownClass = isOwn ? 'own-msg' : '';
             const botClass = isNeo ? 'neo-msg' : '';
+            const roleClass = msg.role === 'admin' ? 'role-admin' : msg.role === 'voiced' ? 'role-voiced' : '';
             const avatarIcon = isNeo ? '🤖' : '👤';
           %>
-          <div class="chat-msg <%= userClass %> <%= ownClass %> <%= botClass %>">
-            <div class="msg-avatar"><%= avatarIcon %></div>
-            <div class="msg-content">
-              <span class="mention-name" title="<%= new Date(msg.timestamp).toLocaleString() %>">@<%= msg.sender %></span>
-              <span class="timestamp"><%= new Date(msg.timestamp).toLocaleString() %></span><br>
-              <% if (msg.isPrivate) { %>
-                <em>[Private to <%= msg.to %>]</em><br>
-              <% } %>
-              <%= msg.content %>
+
+          <% if (showDay) { %>
+            <div class="chat-day-divider"><%= day %></div>
+          <% } %>
+
+          <% if (showHeader) { %>
+            <div class="chat-msg <%= userClass %> <%= ownClass %> <%= botClass %> <%= roleClass %>">
+              <div class="msg-avatar"><%= avatarIcon %></div>
+              <div class="msg-content">
+                <span class="mention-name" title="<%= new Date(msg.timestamp).toLocaleString() %>">@<%= msg.sender %></span>
+                <span class="timestamp"><%= new Date(msg.timestamp).toLocaleTimeString() %></span><br>
+                <% if (msg.isPrivate) { %>
+                  <em>[Private to <%= msg.to %>]</em><br>
+                <% } %>
+                <%= msg.content %>
+              </div>
             </div>
-          </div>
+          <% } else { %>
+            <div class="chat-msg continuation">
+              <div class="msg-content">
+                <% if (msg.isPrivate) { %>
+                  <em>[Private to <%= msg.to %>]</em><br>
+                <% } %>
+                <%= msg.content %>
+              </div>
+            </div>
+          <% } %>
+
+          <% lastSender = msg.sender; lastTime = msg.timestamp; lastDay = day; %>
           <% }) %>
         </div>
 
@@ -78,6 +106,5 @@
       }
     });
   </script>
-  
 </body>
 </html>

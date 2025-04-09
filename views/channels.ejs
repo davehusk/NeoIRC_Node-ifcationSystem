@@ -10,34 +10,38 @@
 <main class="main-content channel-page">
   <h2>📡 Channel Control Center</h2>
 
-  <section class="admin-section">
-    <h3>🛰️ Available Channels</h3>
-    <ul class="channel-list">
-      <% channels.forEach(c => { %>
-        <li class="channel-entry">
-          <div class="channel-meta">
-            <a href="/dashboard?channel=<%= c.name %>">#<%= c.name %></a>
-            <span class="channel-desc"><%= c.description || 'No description' %></span>
-            <small><%= c.name === 'general' ? '🛸 Built-in' : '🧪 User-created' %></small>
-          </div>
-          <% if (isAdmin) { %>
-            <form method="POST" action="/channels/delete" class="channel-delete-form" onsubmit="return confirm('Are you sure you want to delete this channel?')">
-              <input type="hidden" name="name" value="<%= c.name %>">
-              <button type="submit">🗑️ Delete</button>
-            </form>
-          <% } %>
-        </li>
-      <% }) %>
-    </ul>
-  </section>
+  <section class="profile-layout">
+    <!-- Available Channels -->
+    <div class="profile-card">
+      <h3>🛰️ Available Channels</h3>
+      <ul class="channel-list">
+        <% channels.forEach(c => { %>
+          <li class="channel-entry">
+            <div class="channel-meta">
+              <a href="/dashboard?channel=<%= c.name %>">#<%= c.name %></a>
+              <span class="channel-desc"><%= c.description || 'No description' %></span>
+              <small><%= c.name === 'general' ? '🛸 Built-in' : '🧪 User-created' %></small>
+            </div>
+            <% if (isAdmin) { %>
+              <form method="POST" action="/channels/delete" class="channel-delete-form" onsubmit="return confirm('Are you sure you want to delete this channel?')">
+                <input type="hidden" name="name" value="<%= c.name %>">
+                <button type="submit">🗑️ Delete</button>
+              </form>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
 
-  <section class="admin-section">
-    <h3>➕ Create New Channel</h3>
-    <form method="POST" action="/channels/create" class="create-channel-form">
-      <input type="text" name="name" placeholder="#channel-name" required>
-      <input type="text" name="description" placeholder="Optional description...">
-      <button type="submit">➕ Create</button>
-    </form>
+    <!-- Create Channel -->
+    <div class="profile-card">
+      <h3>➕ Create New Channel</h3>
+      <form method="POST" action="/channels/create" class="create-channel-form">
+        <input type="text" name="name" placeholder="#channel-name" required>
+        <input type="text" name="description" placeholder="Optional description...">
+        <button type="submit">➕ Create</button>
+      </form>
+    </div>
   </section>
 </main>
 </body>

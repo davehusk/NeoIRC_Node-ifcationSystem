@@ -10,8 +10,10 @@
 <main class="main-content admin-page">
   <h2>🛠️ Admin Control Center</h2>
 
-  <section class="admin-grid">
-    <div class="admin-tile full-width">
+  <section class="profile-layout">
+
+    <!-- Global Announcement -->
+    <div class="profile-card">
       <h3>📢 Send Global Announcement</h3>
       <form id="admin-message-form">
         <textarea id="admin-announcement" name="message" required placeholder="Broadcast something important..."></textarea>
@@ -20,24 +22,46 @@
       </form>
     </div>
 
-    <div class="admin-tile">
-      <h3>📋 User Status</h3>
-      <ul class="user-list-stats">
-        <% users.forEach(u => { %>
-          <li class="user-card">
-            <strong><a href="/profile/<%= u.username %>"><%= u.username %></a></strong>
+    <!-- User Management -->
+    <div class="profile-card">
+      <h3>👥 Manage Users</h3>
+      <% users.forEach(u => { %>
+        <div class="user-card <%= u.isBanned ? 'banned' : '' %>">
+          <strong><a href="/profile/<%= u.username %>">@<%= u.username %></a></strong>
+          <div>
             <span class="badge role-<%= u.role %>"><%= u.role %></span>
             <% if (u.isOnline) { %>
               <span class="online">🟢 Online in #<%= u.currentChannel || 'general' %></span>
             <% } else { %>
               <span class="offline">⚫ Last seen <%= new Date(u.lastActive).toLocaleString() %></span>
             <% } %>
-          </li>
-        <% }) %>
-      </ul>
+          </div>
+
+          <div class="user-controls">
+            <!-- Role Change -->
+            <form method="POST" action="/admin/role">
+              <input type="hidden" name="username" value="<%= u.username %>">
+              <select name="role" class="role-select">
+                <option value="user" <%= u.role === 'user' ? 'selected' : '' %>>User</option>
+                <option value="voiced" <%= u.role === 'voiced' ? 'selected' : '' %>>Voiced</option>
+                <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
+              </select>
+              <button type="submit">🔄 Update Role</button>
+            </form>
+
+            <!-- Ban Toggle -->
+            <form method="POST" action="/admin/ban">
+              <input type="hidden" name="username" value="<%= u.username %>">
+              <input type="hidden" name="ban" value="<%= !u.isBanned %>">
+              <button type="submit"><%= u.isBanned ? '🔓 Unban' : '⛔ Ban' %></button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
     </div>
 
-    <div class="admin-tile">
+    <!-- Broadcasts -->
+    <div class="profile-card">
       <h3>📜 Recent Broadcasts</h3>
       <div id="announcement-wrapper">
         <% announcements.slice(0, 5).forEach(msg => {

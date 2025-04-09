@@ -4,7 +4,6 @@ let ws;
 const form = document.getElementById("chat-form");
 const messageInput = document.getElementById("message-input");
 const toUserInput = document.getElementById("to-user");
-
 const chatStream = document.getElementById("chat-stream");
 const userList = document.getElementById("user-list");
 
@@ -25,15 +24,30 @@ function appendMessage(streamId, html, key) {
 
 function handleWebSocketMessage(event) {
   const data = JSON.parse(event.data);
+
+  // === Presence Update ===
   if (data.type === 'presence' && userList) {
     userList.innerHTML = '';
     data.users.forEach(user => {
       const li = document.createElement("li");
       li.className = "user-entry";
       li.dataset.username = user.username;
+
+      // Removed unused variable 'isNeo'
+      const isBanned = user.isBanned;
+      const role = user.role;
+
+      let roleBadge = '';
+      if (role === 'admin') roleBadge = '<span class="role-admin">[admin]</span>';
+      else if (role === 'voiced') roleBadge = '<span class="role-voiced">[voiced]</span>';
+
+      const statusIcon = isBanned ? '⛔' : '●';
+      const statusClass = isBanned ? 'offline' : 'online';
+
       li.innerHTML = `
-        <a href="/profile/${user.username}" class="mention-name">@${user.username}</a>
-        <span class="online">●</span>
+        <a href="/profile/${user.username}" class="mention-name">${isBanned ? '<del>@' + user.username + '</del>' : '@' + user.username}</a>
+        ${roleBadge}
+        <span class="${statusClass}">${statusIcon}</span>
         <small>#${user.channel}</small>
       `;
       userList.appendChild(li);
@@ -42,7 +56,7 @@ function handleWebSocketMessage(event) {
     document.querySelectorAll('.mention-name').forEach(el => {
       el.addEventListener("click", () => {
         if (toUserInput) {
-          toUserInput.value = el.textContent.replace('@', '');
+          toUserInput.value = el.textContent.replace('@', '').replace('~', '');
           messageInput.focus();
         }
       });
@@ -51,21 +65,30 @@ function handleWebSocketMessage(event) {
     return;
   }
 
+  // === Chat Message Render ===
   const timestampKey = data.timestamp.replace(/\W/g, '');
   const key = `${data.sender}-${timestampKey}`;
   const isOwn = data.sender === window.currentUser;
+  const isNeo = data.sender === 'Neo';
+
   const userClass = `user-${data.sender.toLowerCase()}`;
   const ownClass = isOwn ? 'own-msg' : '';
-  const botClass = data.sender === 'Neo' ? 'neo-msg' : '';
+  const botClass = isNeo ? 'neo-msg' : '';
+
+  let roleClass = '';
+  if (data.role === 'admin') roleClass = 'role-admin';
+  else if (data.role === 'voiced') roleClass = 'role-voiced';
+
+  const avatarIcon = isNeo ? '🤖' : '👤';
   const timestampTitle = `title="${data.timestamp}"`;
 
-  const avatarIcon = data.sender === 'Neo' ? '🤖' : '👤';
   const html = `
-    <div class="chat-msg ${userClass} ${ownClass} ${botClass}" data-id="${key}">
+    <div class="chat-msg ${userClass} ${ownClass} ${botClass} ${roleClass}" data-id="${key}">
       <div class="msg-avatar">${avatarIcon}</div>
       <div class="msg-content">
-        <span class="mention-name" ${timestampTitle}>${data.sender}</span>
+        <span class="mention-name" ${timestampTitle}>@${data.sender}</span>
         <span class="timestamp" ${timestampTitle}>${data.timestamp}</span><br>
+        ${data.to ? `<em>[Private to ${data.to}]</em><br>` : ''}
         <span>${data.content}</span>
       </div>
     </div>
@@ -80,22 +103,28 @@ function connectWebSocket(channel) {
   ws.addEventListener("message", handleWebSocketMessage);
 }
 
+// === Message Form ===
 if (form) {
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const message = messageInput.value.trim();
-        if (!message) return;
-      
-        const to = toUserInput?.value.trim();
-      
-        await fetch("/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, to, channel: currentChannel })
-        });
-      
-        messageInput.value = "";
-      });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    const to = toUserInput?.value.trim();
+    const res = await fetch("/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, to, channel: currentChannel })
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      alert(text || "Message failed");
+      return;
+    }
+
+    messageInput.value = "";
+  });
 
   messageInput.addEventListener("keydown", e => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -105,6 +134,7 @@ if (form) {
   });
 }
 
+// === Mention Quick-Insert ===
 document.querySelectorAll('.mention-name').forEach(name => {
   name.addEventListener("click", () => {
     toUserInput.value = name.textContent.replace('@', '');

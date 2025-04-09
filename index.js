@@ -41,7 +41,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
     if (!userId || !username) return ws.close();
   
     const user = await User.findById(userId);
-    if (!user) return ws.close();
+    if (!user || user.isBanned) return ws.close(); // ✅ REJECT BANNED USERS
   
     user.isOnline = true;
     user.lastActive = new Date();
@@ -61,21 +61,39 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
       broadcastUserStatus();
     });
   });
+  
 
-function broadcastUserStatus() {
-  const botUser = { username: 'Neo', channel: 'system' };
-  const userMap = [botUser, ...clients.map(c => ({
-    username: c.username,
-    channel: c.channel
-  }))];
-
-  clients.forEach(client => {
-    client.ws.send(JSON.stringify({
-      type: 'presence',
-      users: userMap
-    }));
-  });
-}
+  async function broadcastUserStatus() {
+    const botUser = {
+      username: 'Neo',
+      channel: 'system',
+      role: 'bot',
+      isBanned: false
+    };
+  
+    // Grab user data from DB
+    const userMap = [botUser];
+  
+    for (const client of clients) {
+      const user = await User.findOne({ username: client.username }).lean();
+      if (user) {
+        userMap.push({
+          username: user.username,
+          channel: client.channel,
+          role: user.role,
+          isBanned: user.isBanned
+        });
+      }
+    }
+  
+    clients.forEach(client => {
+      client.ws.send(JSON.stringify({
+        type: 'presence',
+        users: userMap
+      }));
+    });
+  }
+  
 
 function requireAuth(req, res, next) {
   if (req.session.userId) return next();
@@ -280,6 +298,9 @@ app.get('/admin', requireAuth, requireAdmin, async (req, res) => {
 
 app.post('/send', requireAuth, async (req, res) => {
   const { message, to, fromAdmin, channel } = req.body;
+  const user = await User.findById(req.session.userId);
+  if (!user || user.isBanned) return res.status(403).send("You are banned");
+
   const sender = fromAdmin ? '📢 SYSTEM' : req.session.username;
   const isAnnouncement = !!fromAdmin;
   const isPrivate = !!to;
@@ -392,3 +413,23 @@ app.post('/channels/update', requireAuth, requireAdmin, async (req, res) => {
   await Channel.updateOne({ name }, { name: newName, description });
   res.redirect('/channels');
 });
+
+app.post('/admin/ban', requireAuth, requireAdmin, async (req, res) => {
+    const { username, ban } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).send("User not found");
+    user.isBanned = ban === 'true';
+    await user.save();
+    res.redirect('/admin');
+  });
+  
+  app.post('/admin/role', requireAuth, requireAdmin, async (req, res) => {
+    const { username, role } = req.body;
+    if (!['user', 'admin', 'voiced'].includes(role)) return res.status(400).send("Invalid role");
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).send("User not found");
+    user.role = role;
+    await user.save();
+    res.redirect('/admin');
+  });
+  
