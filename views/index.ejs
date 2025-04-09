@@ -5,14 +5,28 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <main class="main-content">
+<main class="main-content form-page">
+  <section class="form-container">
     <h1>🌌 Welcome to Neo IRC</h1>
-    <p>A real-time communication hub. Please log in or sign up to continue.</p>
-    <p>2025 - David Husk - dave.husk@keyin.com</p>
-    <div style="display: flex; gap: 2rem; justify-content: center; margin-top: 2rem;">
+    <p class="subtitle">The last chat system you'll ever need.</p>
+
+    <div class="login-options">
       <a href="/login"><button>🔐 Login</button></a>
       <a href="/signup"><button>🆕 Sign Up</button></a>
     </div>
-  </main>
+
+    <p class="subtle-link">2025 — Crafted by David Husk</p>
+  </section>
+
+  <section class="user-stats-panel">
+    <h3>🟢 Users Online</h3>
+    <ul class="user-list-stats">
+      <li>🤖 <a href='/profile/Neo'>Neo</a> — <small>#system</small></li>
+      <% usersOnline?.forEach(u => { %>
+        <li>🧬 <a href="/profile/<%= u.username %>"><%= u.username %></a> — <small>#<%= u.channel %></small></li>
+      <% }) %>
+    </ul>
+  </section>
+</main>
 </body>
 </html>

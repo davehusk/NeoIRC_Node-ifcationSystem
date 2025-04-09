@@ -1,106 +1,89 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Neo IRC Admin Panel</title>
-    <link rel="stylesheet" href="/styles.css">
+  <title>🛠️ Admin Panel | Neo IRC</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<header class="main-header">
-    <nav class="toolbar admin-toolbar">
-        <div class="toolbar-left">
-            <a href="/dashboard">🏠 Dashboard</a>
-            <a href="/channels">📡 Channels</a>
-            <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
-                <a href="/admin">🛠️ Admin Panel</a>
+<%- include('partials/_header') %>
+
+<main class="main-content admin-page">
+  <h2>🛠️ Admin Control Center</h2>
+
+  <section class="admin-grid">
+    <div class="admin-tile full-width">
+      <h3>📢 Send Global Announcement</h3>
+      <form id="admin-message-form">
+        <textarea id="admin-announcement" name="message" required placeholder="Broadcast something important..."></textarea>
+        <input type="hidden" name="fromAdmin" value="true">
+        <button type="submit">📡 Broadcast</button>
+      </form>
+    </div>
+
+    <div class="admin-tile">
+      <h3>📋 User Status</h3>
+      <ul class="user-list-stats">
+        <% users.forEach(u => { %>
+          <li class="user-card">
+            <strong><a href="/profile/<%= u.username %>"><%= u.username %></a></strong>
+            <span class="badge role-<%= u.role %>"><%= u.role %></span>
+            <% if (u.isOnline) { %>
+              <span class="online">🟢 Online in #<%= u.currentChannel || 'general' %></span>
+            <% } else { %>
+              <span class="offline">⚫ Last seen <%= new Date(u.lastActive).toLocaleString() %></span>
             <% } %>
-        </div>
-        <div class="toolbar-right">
-            <button onclick="toggleZoom()">🔍 Zoom</button>
-            <form action="/logout" method="POST">
-                <button type="submit">⏏️ Logout</button>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <div class="admin-tile">
+      <h3>📜 Recent Broadcasts</h3>
+      <div id="announcement-wrapper">
+        <% announcements.slice(0, 5).forEach(msg => {
+          const isNew = (new Date() - new Date(msg.timestamp)) < 300000;
+        %>
+          <div class="announcement">
+            <strong>📢 <%= msg.sender %></strong>
+            <% if (isNew) { %>
+              <span class="new-tag">🆕</span>
+            <% } %>
+            <span class="timestamp"><%= new Date(msg.timestamp).toLocaleString() %></span><br>
+            <span><%= msg.content %></span>
+            <form method="POST" action="/announcements/delete" style="display:inline;">
+              <input type="hidden" name="id" value="<%= msg._id %>">
+              <button type="submit" class="delete-btn" onclick="return confirm('Delete this announcement?')">🗑️</button>
             </form>
-        </div>
-    </nav>
-</header>
-
-<main class="main-content">
-    <h2>🛠️ Admin Panel</h2>
-
-    <section>
-        <h3>📋 User List</h3>
-        <ul class="user-list">
-            <% users.forEach(u => { %>
-              <li>
-                <strong><%= u.username %></strong> — <%= u.role %>
-                <% if (u.isOnline) { %>
-                  <span class="online">🟢 Online</span>
-                  <small>in #<%= u.currentChannel || 'general' %></small>
-                <% } else { %>
-                  <span class="offline">🔘 Last active: <%= new Date(u.lastActive).toLocaleString() %></span>
-                <% } %>
-              </li>
-            <% }) %>
-          </ul>
-          
-        
-    </section>
-
-
-    <section>
-        <h3>📢 Send Global Announcement</h3>
-        <form id="admin-message-form">
-            <textarea id="admin-announcement" name="message" required placeholder="Broadcast to all users"></textarea>
-            <input type="hidden" name="fromAdmin" value="true">
-            <button type="submit">📡 Send Announcement</button>
-        </form>
-    </section>
-
-    <section>
-        <h3>🧾 Recent Announcements <button id="toggle-announcements">Collapse</button></h3>
-        <div id="announcement-wrapper" class="chat-box">
-            <% announcements.slice(0, 5).forEach(msg => { 
-                const isNew = (new Date() - new Date(msg.timestamp)) < 300000; 
-            %>
-                <div class="announcement">
-                    <strong>📢 <%= msg.sender %></strong>
-                    <% if (isNew) { %>
-                        <span class="new-tag">🆕</span>
-                    <% } %>
-                    <span class="timestamp"><%= new Date(msg.timestamp).toLocaleString() %></span><br>
-                    <span><%= msg.content %></span>
-                    <form method="POST" action="/announcements/delete" style="display:inline;">
-                        <input type="hidden" name="id" value="<%= msg._id %>">
-                        <button type="submit" class="delete-btn" onclick="return confirm('Delete this announcement?')">🗑️</button>
-
-                    </form>
-                </div>
-            <% }) %>
-        </div>
-    </section>
-    
-    
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </section>
 </main>
 
 <script>
-    function toggleZoom() {
-        document.body.classList.toggle('zoomed');
-    }
-
-    document.getElementById("admin-message-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const message = document.getElementById("admin-announcement").value;
-        await fetch("/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, fromAdmin: true })
-        });
-        e.target.reset();
-      });
-
-    document.getElementById("toggle-announcements")?.addEventListener("click", () => {
-        const el = document.getElementById("announcement-wrapper");
-        el.style.display = el.style.display === "none" ? "block" : "none";
+  document.getElementById("admin-message-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const message = document.getElementById("admin-announcement").value;
+    const res = await fetch("/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, fromAdmin: true })
     });
+    const data = await res.json();
+    e.target.reset();
+
+    const wrapper = document.getElementById("announcement-wrapper");
+    const div = document.createElement("div");
+    div.className = "announcement pulse";
+    div.innerHTML = `
+      <strong>📢 ${data.sender}</strong>
+      <span class="new-tag">🆕</span>
+      <span class="timestamp">${data.timestamp}</span><br>
+      <span>${data.content}</span>
+    `;
+    wrapper.prepend(div);
+  });
 </script>
 </body>
 </html>

@@ -1,33 +1,20 @@
-<header>
-    <nav class="toolbar">
-      <div class="toolbar-left">
-        <a href="/dashboard">🏠 Dashboard</a>
-        <a href="/channels">📡 Channels</a>
-        <% if (isAdmin) { %>
-          <a href="/admin">🛠️ Admin</a>
-        <% } %>
-        <a href="/profile">👤 Profile</a>
-      </div>
-      <div class="toolbar-right">
-        <% if (username) { %>
-          <span class="user-badge">Hello, <%= username %></span>
-        <% } %>
-        <form action="/logout" method="POST" style="display: inline;" aria-label="Logout">
-
+<header class="main-header">
+  <nav class="toolbar unified-header">
+    <div class="toolbar-left">
+      <a href="/dashboard">🏠 Dashboard</a>
+      <a href="/profile">👤 Profile</a>
+      <a href="/channels">📡 Channels</a>
+      <% if (isAdmin) { %>
+        <a href="/admin">🛠️ Admin</a>
+      <% } %>
+    </div>
+    <div class="toolbar-right">
+      <% if (username) { %>
+        <span class="user-badge">🧠 <%= username %></span>
+        <form action="/logout" method="POST" style="display: inline;">
           <button type="submit">⏏️ Logout</button>
         </form>
-      </div>
-    </nav>
-  </header>
-  
-  
-  
-<script>
-    function toggleZoom() {
-        const zoomTarget = document.documentElement;
-        const currentScale = zoomTarget.style.getPropertyValue('--zoom-scale') || '1';
-        const newScale = currentScale === '1.25' ? '1' : '1.25';
-        zoomTarget.style.setProperty('--zoom-scale', newScale);
-    }
-    </script>
-    
+      <% } %>
+    </div>
+  </nav>
+</header>

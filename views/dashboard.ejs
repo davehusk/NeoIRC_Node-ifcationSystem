@@ -1,100 +1,83 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Neo IRC Dashboard</title>
-    <link rel="stylesheet" href="/styles.css">
+  <title>Neo IRC — #<%= currentChannel %></title>
+  <link rel="stylesheet" href="/styles.css">
+  <script>
+    window.currentUser = "<%= username %>";
+  </script>
 </head>
 <body>
-<%- include('partials/_header') %>
+  <%- include('partials/_header') %>
 
-<main class="main-content">
-    <h2>👤 Welcome, <%= username %> — Channel: #<%= currentChannel %></h2>
+  <main class="main-content">
+    <h2>🧠 <%= username %> in #<%= currentChannel %></h2>
 
     <div class="chat-layout">
-        <aside class="user-list">
-            <h4>🧬 Connected Users</h4>
-            <ul id="user-list">
-                <% users.forEach(user => { %>
-                    <li class="user-entry" data-username="<%= user.username %>">
-                        <%= user.username %>
-                        <% if (user.isOnline) { %>
-                            <span class="online">●</span>
-                            <a class="user-channel-link" href="/dashboard?channel=<%= user.currentChannel || 'general' %>">
-                                <small>#<%= user.currentChannel || 'general' %></small>
-                            </a>
-                        <% } else { %>
-                            <span class="offline">○</span>
-                        <% } %>
-                    </li>
-                <% }) %>
-            </ul>
-        </aside>
+      <!-- 👥 User Sidebar -->
+      <aside class="user-list">
+        <h3>🧬 Users</h3>
+        <ul id="user-list">
+          <% users.forEach(user => { %>
+            <li class="user-entry">
+              <a class="mention-name" href="/profile/<%= user.username %>">@<%= user.username %></a>
+              <% if (user.isOnline) { %>
+                <span class="online">●</span>
+                <small>#<%= user.currentChannel || 'general' %></small>
+              <% } else { %>
+                <span class="offline">○</span>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      </aside>
 
-        <section class="chat-box">
-            <div class="chat-tabs">
-                <button class="tab-btn" data-target="chat-stream">💬 Chat</button>
-                <button class="tab-btn" data-target="private-stream">🕵️ Private</button>
+      <!-- 💬 Chat Area -->
+      <section class="chat-box">
+        <div id="chat-stream" class="chat-stream">
+          <% messages.forEach(msg => {
+            const isPrivate = msg.isPrivate;
+            const isNeo = msg.sender === 'Neo';
+            const isOwn = msg.sender === username;
+            const userClass = `user-${msg.sender.toLowerCase()}`;
+            const ownClass = isOwn ? 'own-msg' : '';
+            const botClass = isNeo ? 'neo-msg' : '';
+            const avatarIcon = isNeo ? '🤖' : '👤';
+          %>
+          <div class="chat-msg <%= userClass %> <%= ownClass %> <%= botClass %>">
+            <div class="msg-avatar"><%= avatarIcon %></div>
+            <div class="msg-content">
+              <span class="mention-name" title="<%= new Date(msg.timestamp).toLocaleString() %>">@<%= msg.sender %></span>
+              <span class="timestamp"><%= new Date(msg.timestamp).toLocaleString() %></span><br>
+              <% if (msg.isPrivate) { %>
+                <em>[Private to <%= msg.to %>]</em><br>
+              <% } %>
+              <%= msg.content %>
             </div>
+          </div>
+          <% }) %>
+        </div>
 
-            <div id="chat-stream" class="chat-stream active">
-                <% messages.filter(msg => !msg.isPrivate && !msg.isAnnouncement).forEach(msg => { %>
-                    <div>
-                        <strong><%= msg.sender %></strong>
-                        <span class="timestamp">[<%= new Date(msg.timestamp).toLocaleString() %>]</span><br>
-                        <span><%= msg.content %></span>
-                    </div>
-                <% }) %>
-            </div>
-
-            <div id="private-stream" class="chat-stream">
-                <% messages.filter(msg => msg.isPrivate).forEach(msg => { %>
-                    <div>
-                        <em>[Private to <%= msg.to %>]</em><br>
-                        <strong><%= msg.sender %></strong>
-                        <span class="timestamp">[<%= new Date(msg.timestamp).toLocaleString() %>]</span><br>
-                        <span><%= msg.content %></span>
-                    </div>
-                <% }) %>
-            </div>
-        </section>
+        <!-- 📝 Chat Input -->
+        <form id="chat-form">
+          <input type="text" id="message-input" name="message" placeholder="✍️ Type a message..." required />
+          <input type="hidden" id="to-user" name="to" />
+          <input type="hidden" id="channel-name" name="channel" value="<%= currentChannel %>" />
+          <button type="submit">🚀 Send</button>
+        </form>
+      </section>
     </div>
-<% if (typeof replyTo !== 'undefined') { %>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById("to-user").value = "<%= replyTo %>";
-            document.getElementById("message-input").focus();
-        });
-    </script>
-<% } %>
-<% if (isAdmin) { %>
-    <form id="clear-chat-form">
-        <input type="hidden" id="clear-channel" value="<%= currentChannel %>">
-        <button type="submit">🧹 Clear Chat in #<%= currentChannel %></button>
-    </form>
-    <% } %>
-    
+  </main>
 
-    <form id="chat-form">
-        <input type="text" id="message-input" name="message" placeholder="✍️ Type message..." required>
-        <input type="text" id="to-user" name="to" placeholder="👤 Private to... (optional)">
-        <input type="hidden" id="channel-name" name="channel" value="<%= currentChannel %>">
-        <button type="submit">🚀 Send</button>
-    </form>
-</main>
-
-<script src="/frontend.js"></script>
-<script>
-    function toggleZoom() {
-        document.body.classList.toggle('zoomed');
-    }
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.chat-stream').forEach(s => s.classList.remove('active'));
-            const id = btn.dataset.target;
-            document.getElementById(id)?.classList.add('active');
-        });
+  <script src="/frontend.js"></script>
+  <script>
+    messageInput?.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form?.dispatchEvent(new Event("submit"));
+      }
     });
-</script>
+  </script>
+  
 </body>
 </html>
