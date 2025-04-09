@@ -563,3 +563,29 @@ body {
 .profile-card:hover {
   transform: translateY(-3px);
 }
+/* Full-width user control panel */
+.profile-card.full-width {
+    width: 100%;
+  }
+  
+  /* Two-column layout below */
+  .profile-split {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .profile-split .profile-card {
+    flex: 1 1 48%;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .profile-split {
+      flex-direction: column;
+    }
+    .profile-split .profile-card {
+      width: 100%;
+    }
+  }
+  
