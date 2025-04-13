@@ -8,7 +8,7 @@
 
 ## 🔗 Live Demo
 
-[https://github.com/davehusk/NeoIRC](https://github.com/davehusk/NeoIRC)
+[https://github.com/davehusk/NeoIRC_Node-ifcationSystem](https://github.com/davehusk/NeoIRC_Node-ifcationSystem)
 
 ---
 
@@ -33,7 +33,7 @@
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/davehusk/NeoIRC.git
+git clone https://github.com/davehusk/NeoIRC_Node-ifcationSystem.git
 cd NeoIRC
 ```
 
