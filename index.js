@@ -11,14 +11,16 @@ const Message = require('./models/Message');
 const Channel = require('./models/Channel');
 
 const app = express();
-expressWs(app);
+expressWs(app); // Enables WebSocket support
 const PORT = process.env.PORT || 3000;
 
+// === Middleware ===
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -27,83 +29,86 @@ app.use(session({
 
 const clients = [];
 
-
-mongoose.connect(process.env.MONGO_URI).then(() => {
+// === Connect to Mongo ===
+const connectToMongo = async () => {
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(process.env.MONGO_URI);
     console.log("MongoDB connected");
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  });
-  
-  app.ws('/ws', async (ws, req) => {
-    const { userId, username } = req.session;
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const channel = decodeURIComponent(url.searchParams.get("channel") || "general");
-  
-    if (!userId || !username) return ws.close();
-  
-    const user = await User.findById(userId);
-    if (!user || user.isBanned) return ws.close(); // ✅ REJECT BANNED USERS
-  
-    user.isOnline = true;
+  }
+};
+
+// === WebSocket Setup ===
+app.ws('/ws', async (ws, req) => {
+  const { userId, username } = req.session;
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const channel = decodeURIComponent(url.searchParams.get("channel") || "general");
+
+  if (!userId || !username) return ws.close();
+
+  const user = await User.findById(userId);
+  if (!user || user.isBanned) return ws.close();
+
+  user.isOnline = true;
+  user.lastActive = new Date();
+  await user.save();
+
+  clients.push({ ws, userId, username, channel });
+
+  broadcastUserStatus();
+
+  ws.on('close', async () => {
+    const index = clients.findIndex(c => c.ws === ws);
+    if (index !== -1) clients.splice(index, 1);
+
+    user.isOnline = false;
     user.lastActive = new Date();
     await user.save();
-  
-    clients.push({ ws, userId, username, channel });
-  
     broadcastUserStatus();
-  
-    ws.on('close', async () => {
-      const index = clients.findIndex(c => c.ws === ws);
-      if (index !== -1) clients.splice(index, 1);
-  
-      user.isOnline = false;
-      user.lastActive = new Date();
-      await user.save();
-      broadcastUserStatus();
-    });
   });
-  
+});
 
-  async function broadcastUserStatus() {
-    const botUser = {
-      username: 'Neo',
-      channel: 'system',
-      role: 'bot',
-      isBanned: false
-    };
-  
-    // Grab user data from DB
-    const userMap = [botUser];
-  
-    for (const client of clients) {
-      const user = await User.findOne({ username: client.username }).lean();
-      if (user) {
-        userMap.push({
-          username: user.username,
-          channel: client.channel,
-          role: user.role,
-          isBanned: user.isBanned
-        });
-      }
+async function broadcastUserStatus() {
+  const botUser = {
+    username: 'Neo',
+    channel: 'system',
+    role: 'bot',
+    isBanned: false
+  };
+
+  const userMap = [botUser];
+
+  for (const client of clients) {
+    const user = await User.findOne({ username: client.username }).lean();
+    if (user) {
+      userMap.push({
+        username: user.username,
+        channel: client.channel,
+        role: user.role,
+        isBanned: user.isBanned
+      });
     }
-  
-    clients.forEach(client => {
-      client.ws.send(JSON.stringify({
-        type: 'presence',
-        users: userMap
-      }));
-    });
   }
-  
 
+  clients.forEach(client => {
+    client.ws.send(JSON.stringify({
+      type: 'presence',
+      users: userMap
+    }));
+  });
+}
+
+// === Middleware Helpers ===
 function requireAuth(req, res, next) {
   if (req.session.userId) return next();
   return res.redirect('/login');
 }
+
 function requireAdmin(req, res, next) {
   if (req.session.role === 'admin') return next();
   return res.status(403).send('Access denied');
 }
 
+// === ROUTES ===
 app.get('/', async (req, res) => {
   if (req.session.userId) {
     const usersOnline = clients.map(c => ({
@@ -432,4 +437,13 @@ app.post('/admin/ban', requireAuth, requireAdmin, async (req, res) => {
     await user.save();
     res.redirect('/admin');
   });
-  
+
+// === Exported App for Testing ===
+if (require.main === module) {
+  // Run app only if called directly
+  connectToMongo().then(() => {
+    app.listen(PORT, () => console.log(`🚀 NeoIRC server running on port ${PORT}`));
+  });
+}
+
+module.exports = app;
